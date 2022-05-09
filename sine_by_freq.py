@@ -45,9 +45,21 @@ def combine_wavs(wav1, wav2, result):
     frames1 = np.frombuffer(data_1, np.int16)
     frames2 = np.frombuffer(data_2, np.int16)
 
-    if nframes1 == nframes2:
+    if nframes1 == 0 or nframes2 == 0:
+        new_data = frames1 + frames2
+
+    elif nframes1 == nframes2:
         new_data = (frames1 * .5) + (frames2 * .5)
-        new_data = new_data.astype('int16')
+    elif nframes1 > nframes2:
+        new_data = (frames1[:nframes2] * .5) + (frames2 * .5)
+        new_data = np.append(new_data, frames1[nframes2:])
+    elif nframes1 < nframes2:
+        new_data = (frames1 * .5) + (frames2[:nframes1] * .5)
+        new_data = np.append(new_data, frames2[nframes1:])
+    
+    
+
+    new_data = new_data.astype('int16')
 
     new_wav = wave.open(result, 'wb')
     new_wav.setnchannels(1)
@@ -86,6 +98,7 @@ def main():
     show_file_parameters(sine_1)
     #octave down:
     freqs = [220, 294, 165, 220]
+    times = [1, .5, .5, .5]
     write_sine(notes, freqs, times, sine_2)
     show_file_parameters(sine_2)
     
