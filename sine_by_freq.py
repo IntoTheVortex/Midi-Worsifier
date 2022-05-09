@@ -17,17 +17,19 @@ FRAMES = 48000.0
 AMP = 8192  #TODO change
 
 #takes time in seconds - will this need to change?
-def write_sine(freq, time):
+def write_sine(num_notes, freq_arr, time_arr):
     wave_file = wave.open(SINE_FILE, 'wb')
     wave_file.setnchannels(1)
     wave_file.setsampwidth(2)
     wave_file.setframerate(FRAMES)
     wave_file.setnframes(int(FRAMES))
 
-    for x in range(int(FRAMES)*time):
-        f = int((sin(2*pi*freq*(x/FRAMES))*AMP))
-        frame = struct.pack('=h', f)
-        wave_file.writeframes(frame)
+    frames = []
+    for i in range(num_notes):
+        for x in range(int(FRAMES*time_arr[i])):
+            f = int((sin(2*pi*freq_arr[i]*(x/FRAMES))*AMP))
+            frame = struct.pack('=h', f)
+            wave_file.writeframes(frame)
     wave_file.close()
 
 
@@ -45,7 +47,11 @@ def show_file_parameters(filename):
 
 
 def main():
-    write_sine(440, 1)
+    notes = 4
+    #A, D, E:
+    freqs = [440, 587, 330, 440]
+    times = [1, .5, .5, 1]
+    write_sine(notes, freqs, times)
     show_file_parameters(SINE_FILE)
 
 
