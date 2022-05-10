@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from mido import MidiFile, Message, tempo2bpm, tick2second
+from mido import MidiFile, tick2second
 import sine_by_freq
 
 #https://soundprogramming.net/file-formats/midi-note-frequencies/
@@ -41,6 +41,7 @@ def read_midi(midi_file):
                 if msg.time > 0:
                     #round to only 4 decimal places
                     delta = round(tick2second(msg.time, mid.ticks_per_beat, tempo), 4)
+                    print(delta)
                 else:
                     delta = 0
                 deltas.append(delta)
@@ -77,8 +78,12 @@ class Midi_chart:
 
 
 def decode_midi(input, chart, delta):
-    n_tracks = len(input)
+    #n_tracks = len(input)
+    n_tracks = 1
+
     for i in range(n_tracks):
+        freqs = []
+        times = []
         #convert each note to freq, and time in seconds
         for j in range(len(input[i])-1, 0, -1):
             note_tuple = input[i][j] 
@@ -91,9 +96,13 @@ def decode_midi(input, chart, delta):
                 time = delta
             else:
                 time = input[i][j+1][1] #the delta from the following note
+                if time > 0:
+                    times.append(time/2) #testing: shouldn't be over 2 but time is off
+                    freqs.append(note)
 
-            #TODO
-            #write_sine(note, time) #this call when sine_by_freq updated
+        sine_by_freq.write_sine(len(freqs), freqs, times, 'test.wav')
+        freqs.clear()
+        times.clear()
 
 
 
