@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 from mido import MidiFile, Message
 
 #https://soundprogramming.net/file-formats/midi-note-frequencies/
@@ -23,18 +24,35 @@ def read_midi(midi_file):
     #ref https://mido.readthedocs.io/en/latest/midi_files.html
     #for mido:
     mid = MidiFile(midi_file)
+
+    #all_notes = np.zeros((len(mid.tracks), 50))
+    #print(len(mid.tracks))
+    #print(all_notes.shape)
+
+    all_notes = []
+    input_notes = []
     for i, track in enumerate(mid.tracks):
         print('Track {}: {}'.format(i, track.name))
+        input_notes = input_notes.clear
+        input_notes = []
         for msg in track:
             #print(msg)
-            pass
+            if msg.type == 'note_on':
+                #print(msg.note)
+                input_notes.append(msg.note)
+        if(input_notes):
+            print(len(input_notes))
+            all_notes.append(input_notes)
+
+        
+    print(all_notes)
     
 class Midi_chart:
     def __init__(self):
         self.setup_notes()
 
-        for i in range(len(self.notes)):
-            print(i, self.notes[i])
+        #for i in range(len(self.notes)):
+            #print(i, self.notes[i])
 
     def setup_notes(self):
         notes = []
