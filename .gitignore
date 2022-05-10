@@ -3,8 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# generated files
+# audio-related files
 *.wav
+*.mid
 
 # C extensions
 *.so
