@@ -1,8 +1,9 @@
 
 import wave 
-from math import sin, pi
+from math import sin, pi, floor
 import struct
 import numpy as np
+from scipy import signal 
 
 #Author: Amber Shore
 #Version: 2022-05-09
@@ -12,24 +13,63 @@ SINE_FILE = 'sine.wav'
 
 #Sound generation parameters:
 #FREQ = 440.0 #variable
-FRAMES = 48000.0
-AMP = 8192  #TODO change
+FRAMES = 48000
+AMP = 16384
 
-#takes time in seconds - will this need to change?
-def write_sine(num_notes, freq_arr, time_arr, file_name):
+
+def open_file(file_name, total_frames):
     wave_file = wave.open(file_name, 'wb')
     wave_file.setnchannels(1)
     wave_file.setsampwidth(2)
     wave_file.setframerate(FRAMES)
-    wave_file.setnframes(int(FRAMES*sum(time_arr)))
+    wave_file.setnframes(total_frames)
+    return wave_file
 
-    frames = []
-    for i in range(num_notes):
-        for x in range(int(FRAMES*time_arr[i])):
+#takes time in seconds - will this need to change?
+def write_sine(freq_arr, frames_arr, wave_file):
+    for i in range(len(freq_arr)):
+        #use number of frames
+        for x in range(frames_arr[i]):
             f = int((sin(2*pi*freq_arr[i]*(x/FRAMES))*AMP))
             frame = struct.pack('=h', f)
             wave_file.writeframes(frame)
-    wave_file.close()
+
+#inspired by https://github.com/pdx-cs-sound/sounddevice-demos/blob/master/nbsquare.py
+def write_square(freq_arr, frames_arr, wave_file):
+    for i in range(len(freq_arr)):
+        halfcycle = FRAMES // (2 * freq_arr[i])
+        #use number of frames
+        period = -1
+        cycle_counter = 0
+        for x in range(frames_arr[i]):
+            f = period * AMP
+            cycle_counter += 1
+            if cycle_counter >= halfcycle:
+                period = -period
+                cycle_counter = 0
+            frame = struct.pack('=h', int(f))
+            wave_file.writeframes(frame)
+
+
+def write_saw(freq_arr, frames_arr, wave_file):
+    for i in range(len(freq_arr)):
+        cycle = FRAMES // freq_arr[i]
+        arr = np.linspace(-1, 1, cycle)
+        for x in range(frames_arr[i]):
+            f = int(AMP * arr[x%len(arr)])
+            frame = struct.pack('=h', f)
+            wave_file.writeframes(frame)
+
+def write_inverse_saw(freq_arr, frames_arr, wave_file):
+    for i in range(len(freq_arr)):
+        #use number of frames
+        for x in range(frames_arr[i]):
+            #f = int((sin(2*pi*freq_arr[i]*(x/FRAMES))*AMP))
+            f = 0 #TODO
+            frame = struct.pack('=h', f)
+            wave_file.writeframes(frame)
+
+
 
 
 #referenced https://stackoverflow.com/questions/28743400/pyaudio-play-multiple-sounds-at-once
@@ -89,21 +129,28 @@ def main():
     sine_1 = 'sine1.wav'
     sine_2 = 'sine2.wav'
     result = 'result.wav'
+    melody = 'melody.wav'
     notes = 4
-    times = [1, .5, .5, 1]
+    num_frames = [FRAMES, int(FRAMES/2), int(FRAMES/3), FRAMES]
+    num_sequences = 3
+    wave_file = open_file(melody, sum(num_frames)*num_sequences)
 
     #A, D, E:
     freqs = [440, 587, 330, 440]
-    write_sine(notes, freqs, times, sine_1)
-    show_file_parameters(sine_1)
+    write_sine(freqs, num_frames, wave_file)
+
     #octave down:
     freqs = [220, 294, 165, 220]
-    times = [1, .5, .5, .5]
-    write_sine(notes, freqs, times, sine_2)
-    show_file_parameters(sine_2)
+    write_sine(freqs, num_frames, wave_file)
     
-    combine_wavs(sine_1, sine_2, result)
-    show_file_parameters(result)
+    #square
+    freqs = [440, 587, 330, 440]
+    write_saw([freqs[0]], num_frames, wave_file)
+
+    
+    #combine_wavs(sine_1, sine_2, result)
+    show_file_parameters(melody)
+    wave_file.close()
 
 
 
