@@ -8,6 +8,9 @@ from scipy import signal
 #Author: Amber Shore
 #Version: 2022-05-09
 
+## TODO
+    # maybe lessen amplitude of square, sawtooth
+
 #Names of files to be created:
 SINE_FILE = 'sine.wav'
 
@@ -60,12 +63,48 @@ def write_saw(freq_arr, frames_arr, wave_file):
             frame = struct.pack('=h', f)
             wave_file.writeframes(frame)
 
-def write_inverse_saw(freq_arr, frames_arr, wave_file):
+
+#TODO fix
+def write_triangle(freq_arr, frames_arr, wave_file):
     for i in range(len(freq_arr)):
-        #use number of frames
+        cycle = FRAMES // freq_arr[i]
+        halfcycle = cycle//2
+        up_arr = np.linspace(-1, 1, halfcycle)
+        down_arr = np.linspace(1, -1, halfcycle)
+        cycle_counter = 0
+
         for x in range(frames_arr[i]):
-            #f = int((sin(2*pi*freq_arr[i]*(x/FRAMES))*AMP))
-            f = 0 #TODO
+            if cycle_counter >= cycle:
+                f = int(AMP * up_arr[x%len(up_arr)])
+                cycle_counter = 0
+            elif cycle_counter >= halfcycle:
+                f = int(AMP * down_arr[x%len(down_arr)])
+                cycle_counter += 1
+            else:
+                f = int(AMP * up_arr[x%len(up_arr)])
+                cycle_counter += 1
+            frame = struct.pack('=h', f)
+            wave_file.writeframes(frame)
+
+#from broken triangle
+def write_mod_1(freq_arr, frames_arr, wave_file):
+    for i in range(len(freq_arr)):
+        cycle = FRAMES // freq_arr[i]
+        halfcycle = cycle//2
+        up_arr = np.linspace(-1, 1, halfcycle)
+        down_arr = np.linspace(1, -1, halfcycle)
+        cycle_counter = 0
+
+        for x in range(frames_arr[i]):
+            if cycle_counter >= cycle:
+                f = int(AMP * up_arr[x%len(up_arr)])
+                cycle_counter = 0
+            elif cycle_counter >= halfcycle:
+                f = int(AMP * down_arr[x%len(down_arr)])
+                cycle_counter += 1
+            else:
+                f = int(AMP * up_arr[x%len(up_arr)])
+                cycle_counter += 1
             frame = struct.pack('=h', f)
             wave_file.writeframes(frame)
 
@@ -97,8 +136,6 @@ def combine_wavs(wav1, wav2, result):
         new_data = (frames1 * .5) + (frames2[:nframes1] * .5)
         new_data = np.append(new_data, frames2[nframes1:])
     
-    
-
     new_data = new_data.astype('int16')
 
     new_wav = wave.open(result, 'wb')
@@ -130,9 +167,9 @@ def main():
     sine_2 = 'sine2.wav'
     result = 'result.wav'
     melody = 'melody.wav'
-    notes = 4
-    num_frames = [FRAMES, int(FRAMES/2), int(FRAMES/3), FRAMES]
-    num_sequences = 3
+
+    num_frames = [FRAMES, int(FRAMES/2), int(FRAMES/2), FRAMES]
+    num_sequences = 4
     wave_file = open_file(melody, sum(num_frames)*num_sequences)
 
     #A, D, E:
@@ -143,9 +180,14 @@ def main():
     freqs = [220, 294, 165, 220]
     write_sine(freqs, num_frames, wave_file)
     
-    #square
+    #sawtooth
     freqs = [440, 587, 330, 440]
-    write_saw([freqs[0]], num_frames, wave_file)
+    #write_saw(freqs, num_frames, wave_file)
+
+    #square
+    freqs = [220, 294, 165, 220]
+    write_triangle(freqs, num_frames, wave_file)
+
 
     
     #combine_wavs(sine_1, sine_2, result)
