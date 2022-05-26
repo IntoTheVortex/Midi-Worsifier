@@ -64,25 +64,26 @@ def write_saw(freq_arr, frames_arr, wave_file):
             wave_file.writeframes(frame)
 
 
-#TODO fix
+#TODO fix - one note gets broken
 def write_triangle(freq_arr, frames_arr, wave_file):
     for i in range(len(freq_arr)):
-        cycle = FRAMES // freq_arr[i]
-        halfcycle = cycle//2
+        halfcycle = FRAMES // (2 * freq_arr[i])
+
         up_arr = np.linspace(-1, 1, halfcycle)
         down_arr = np.linspace(1, -1, halfcycle)
         cycle_counter = 0
 
         for x in range(frames_arr[i]):
-            if cycle_counter >= cycle:
-                f = int(AMP * up_arr[x%len(up_arr)])
+            if cycle_counter == halfcycle*2:
                 cycle_counter = 0
-            elif cycle_counter >= halfcycle:
-                f = int(AMP * down_arr[x%len(down_arr)])
+
+            if cycle_counter >= halfcycle:
+                f = int(AMP * down_arr[x%halfcycle])
                 cycle_counter += 1
             else:
-                f = int(AMP * up_arr[x%len(up_arr)])
+                f = int(AMP * up_arr[x%halfcycle])
                 cycle_counter += 1
+
             frame = struct.pack('=h', f)
             wave_file.writeframes(frame)
 
