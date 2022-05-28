@@ -9,7 +9,6 @@ from scipy import signal
 #Version: 2022-05-09
 
 ## TODO
-    # maybe lessen amplitude of square, sawtooth
     # change to returning frames instead of writing
 
 #Names of files to be created:
@@ -46,7 +45,7 @@ def write_square(freq_arr, frames_arr, wave_file):
         period = -1
         cycle_counter = 0
         for x in range(frames_arr[i]):
-            f = period * AMP
+            f = period * (AMP/6)
             cycle_counter += 1
             if cycle_counter >= halfcycle:
                 period = -period
@@ -60,7 +59,7 @@ def write_saw(freq_arr, frames_arr, wave_file):
         cycle = FRAMES // freq_arr[i]
         arr = np.linspace(-1, 1, cycle)
         for x in range(frames_arr[i]):
-            f = int(AMP * arr[x%len(arr)])
+            f = int((AMP/6) * arr[x%len(arr)])
             frame = struct.pack('=h', f)
             wave_file.writeframes(frame)
 
@@ -176,13 +175,11 @@ def show_file_parameters(filename):
 
 
 def main():
-    sine_1 = 'sine1.wav'
-    sine_2 = 'sine2.wav'
-    result = 'result.wav'
     melody = 'melody.wav'
 
     num_frames = [FRAMES, int(FRAMES/2), int(FRAMES/2), FRAMES]
     num_sequences = 4
+
     wave_file = open_file(melody, sum(num_frames)*num_sequences)
 
     #A, D, E:
@@ -191,11 +188,11 @@ def main():
 
     #octave down:
     freqs = [220, 294, 165, 220]
-    write_sine(freqs, num_frames, wave_file)
+    write_square(freqs, num_frames, wave_file)
     
     #sawtooth
     freqs = [440, 587, 330, 440]
-    #write_saw(freqs, num_frames, wave_file)
+    write_saw(freqs, num_frames, wave_file)
 
     #square
     freqs = [220, 294, 165, 220]
