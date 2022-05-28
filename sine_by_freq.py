@@ -9,7 +9,7 @@ from scipy import signal
 #Version: 2022-05-09
 
 ## TODO
-    # change to returning frames instead of writing
+    # use ramp for all types?
 
 #Names of files to be created:
 SINE_FILE = 'sine.wav'
@@ -28,43 +28,57 @@ def open_file(file_name, total_frames):
     wave_file.setnframes(total_frames)
     return wave_file
 
-#takes time in seconds - will this need to change?
+def write_file(frames, file):
+    for f in frames:
+        file.writeframes(f)
+
 def write_sine(freq_arr, frames_arr, wave_file):
+    frames = []
+
     for i in range(len(freq_arr)):
         #use number of frames
         for x in range(frames_arr[i]):
             f = int((sin(2*pi*freq_arr[i]*(x/FRAMES))*AMP))
-            frame = struct.pack('=h', f)
-            wave_file.writeframes(frame)
+            frames.append(struct.pack('=h', f))
 
-#inspired by https://github.com/pdx-cs-sound/sounddevice-demos/blob/master/nbsquare.py
+    return frames
+
+#https://github.com/pdx-cs-sound/sounddevice-demos/blob/master/nbsquare.py
 def write_square(freq_arr, frames_arr, wave_file):
+    frames = []
+
     for i in range(len(freq_arr)):
         halfcycle = FRAMES // (2 * freq_arr[i])
         #use number of frames
         period = -1
         cycle_counter = 0
         for x in range(frames_arr[i]):
-            f = period * (AMP/6)
+            f = period * (AMP/5)
             cycle_counter += 1
             if cycle_counter >= halfcycle:
                 period = -period
                 cycle_counter = 0
-            frame = struct.pack('=h', int(f))
-            wave_file.writeframes(frame)
+            frames.append(struct.pack('=h', int(f)))
+    
+    return frames
 
 
 def write_saw(freq_arr, frames_arr, wave_file):
+    frames = []
+
     for i in range(len(freq_arr)):
         cycle = FRAMES // freq_arr[i]
         arr = np.linspace(-1, 1, cycle)
         for x in range(frames_arr[i]):
-            f = int((AMP/6) * arr[x%len(arr)])
-            frame = struct.pack('=h', f)
-            wave_file.writeframes(frame)
+            f = int((AMP/5) * arr[x%len(arr)])
+            frames.append(struct.pack('=h', f))
+
+    return frames
 
 
 def write_triangle(freq_arr, frames_arr, wave_file):
+    frames = []
+
     for i in range(len(freq_arr)):
         halfcycle = FRAMES // (2 * freq_arr[i])
         length = frames_arr[i]
@@ -95,11 +109,14 @@ def write_triangle(freq_arr, frames_arr, wave_file):
                 y -= 1
                 f = f * (y / number_ramp)
 
-            frame = struct.pack('=h', int(f))
-            wave_file.writeframes(frame)
+            frames.append(struct.pack('=h', int(f)))
+
+    return frames
 
 #from broken triangle
 def write_mod_1(freq_arr, frames_arr, wave_file):
+    frames = []
+
     for i in range(len(freq_arr)):
         cycle = FRAMES // freq_arr[i]
         halfcycle = cycle//2
@@ -109,16 +126,17 @@ def write_mod_1(freq_arr, frames_arr, wave_file):
 
         for x in range(frames_arr[i]):
             if cycle_counter >= cycle:
-                f = int(AMP * up_arr[x%len(up_arr)])
+                f = (AMP/2) * up_arr[x%len(up_arr)]
                 cycle_counter = 0
             elif cycle_counter >= halfcycle:
-                f = int(AMP * down_arr[x%len(down_arr)])
+                f = (AMP/2) * down_arr[x%len(down_arr)]
                 cycle_counter += 1
             else:
-                f = int(AMP * up_arr[x%len(up_arr)])
+                f = (AMP/2) * up_arr[x%len(up_arr)]
                 cycle_counter += 1
-            frame = struct.pack('=h', f)
-            wave_file.writeframes(frame)
+            frames.append(struct.pack('=h', int(f)))
+
+    return frames
 
 
 
@@ -178,25 +196,38 @@ def main():
     melody = 'melody.wav'
 
     num_frames = [FRAMES, int(FRAMES/2), int(FRAMES/2), FRAMES]
-    num_sequences = 4
+    num_sequences = 6
 
     wave_file = open_file(melody, sum(num_frames)*num_sequences)
+    frames = []
 
     #A, D, E:
     freqs = [440, 587, 330, 440]
-    write_sine(freqs, num_frames, wave_file)
+    frames.append(write_sine(freqs, num_frames, wave_file))
 
     #octave down:
     freqs = [220, 294, 165, 220]
-    write_square(freqs, num_frames, wave_file)
+    frames.append(write_square(freqs, num_frames, wave_file))
     
     #sawtooth
     freqs = [440, 587, 330, 440]
-    write_saw(freqs, num_frames, wave_file)
+    frames.append(write_saw(freqs, num_frames, wave_file))
 
     #square
     freqs = [220, 294, 165, 220]
-    write_triangle(freqs, num_frames, wave_file)
+    frames.append(write_triangle(freqs, num_frames, wave_file))
+
+    #sawtooth
+    freqs = [440, 587, 330, 440]
+    frames.append(write_mod_1(freqs, num_frames, wave_file))
+
+    #sawtooth
+    freqs = [220, 294, 165, 220]
+    frames.append(write_mod_1(freqs, num_frames, wave_file))
+
+
+    write_file(np.asarray(frames), wave_file)
+
 
 
     
