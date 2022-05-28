@@ -10,6 +10,7 @@ from scipy import signal
 
 ## TODO
     # maybe lessen amplitude of square, sawtooth
+    # change to returning frames instead of writing
 
 #Names of files to be created:
 SINE_FILE = 'sine.wav'
@@ -64,27 +65,38 @@ def write_saw(freq_arr, frames_arr, wave_file):
             wave_file.writeframes(frame)
 
 
-#TODO fix - one note gets broken
 def write_triangle(freq_arr, frames_arr, wave_file):
     for i in range(len(freq_arr)):
         halfcycle = FRAMES // (2 * freq_arr[i])
+        length = frames_arr[i]
 
         up_arr = np.linspace(-1, 1, halfcycle)
         down_arr = np.linspace(1, -1, halfcycle)
+        number_ramp = int(.05 * length)
+        number_release = length - number_ramp
         cycle_counter = 0
 
-        for x in range(frames_arr[i]):
+        for x in range(length):
             if cycle_counter == halfcycle*2:
                 cycle_counter = 0
 
             if cycle_counter >= halfcycle:
-                f = int(AMP * down_arr[x%halfcycle])
+                f = AMP * down_arr[x%halfcycle]
                 cycle_counter += 1
             else:
-                f = int(AMP * up_arr[x%halfcycle])
+                f = AMP * up_arr[x%halfcycle]
                 cycle_counter += 1
 
-            frame = struct.pack('=h', f)
+            #envelope to reduce clicking
+            if x <= number_ramp:
+                f = f * (x / number_ramp)
+            elif x == number_release:
+                y = number_ramp
+            elif x > number_release:
+                y -= 1
+                f = f * (y / number_ramp)
+
+            frame = struct.pack('=h', int(f))
             wave_file.writeframes(frame)
 
 #from broken triangle
