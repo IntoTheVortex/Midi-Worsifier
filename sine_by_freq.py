@@ -25,8 +25,9 @@ def open_file(file_name, total_frames):
 
 # write the given frames to the .wav file
 def write_file(frames, file):
-    print(frames.shape)
+    #print(frames.shape)
     frames = np.ravel(frames)
+    print("this!")
     print(frames.shape)
     for f in frames:
         frame = struct.pack('=h', int(f))
@@ -232,6 +233,20 @@ def show_file_parameters(filename):
     print("Frame rate:", file.getframerate())
     print("Frames:", file.getnframes())
     print("Parameters:", file.getparams())
+    file.close()
+
+def write_from_midi(filename, times_arr, freqs_arr):
+    frames_arr = list(times_arr)
+    for i in range(len(frames_arr)):
+        frames_arr[i] = int(frames_arr[i] * FRAMES)
+
+    #print(frames_arr)
+
+    total_frames = sum(frames_arr)
+    file = open_file(filename, total_frames)
+
+    frames = write_sine(freqs_arr, frames_arr)
+    write_file(frames, file)
     file.close()
 
 
