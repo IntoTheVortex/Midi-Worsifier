@@ -9,11 +9,12 @@ import numpy as np
 
 
 #Sound generation parameters:
-FRAMES = 48000
-AMP = 16384
-ENV = 0.05
+FRAMES = 48000  #Frames per second
+AMP = 16384     #amplitude
+ENV = 0.05      #fraction of start & end of note to apply ramp/reverse
 
 
+# open and set up a .wav file
 def open_file(file_name, total_frames):
     wave_file = wave.open(file_name, 'wb')
     wave_file.setnchannels(1)
@@ -22,6 +23,7 @@ def open_file(file_name, total_frames):
     wave_file.setnframes(total_frames)
     return wave_file
 
+# write the given frames to the .wav file
 def write_file(frames, file):
     print(frames.shape)
     frames = np.ravel(frames)
@@ -30,6 +32,8 @@ def write_file(frames, file):
         frame = struct.pack('=h', int(f))
         file.writeframes(frame)
 
+# create a sequence of notes using a sine wave at the given 
+# frequencies and for the given number of frames
 def write_sine(freq_arr, frames_arr):
     all_frames = np.array([])
 
@@ -48,6 +52,8 @@ def write_sine(freq_arr, frames_arr):
 
     return all_frames
 
+# create a sequence of notes using a square wave at the given 
+# frequencies and for the given number of frames
 #https://github.com/pdx-cs-sound/sounddevice-demos/blob/master/nbsquare.py
 def write_square(freq_arr, frames_arr):
     all_frames = np.array([])
@@ -74,6 +80,8 @@ def write_square(freq_arr, frames_arr):
     return all_frames
 
 
+# create a sequence of notes using a sawtooth wave at the given 
+# frequencies and for the given number of frames
 def write_saw(freq_arr, frames_arr):
     all_frames = np.array([])
 
@@ -93,6 +101,8 @@ def write_saw(freq_arr, frames_arr):
     return all_frames
 
 
+# create a sequence of notes using a triangle wave at the given 
+# frequencies and for the given number of frames
 def write_triangle(freq_arr, frames_arr):
     all_frames = np.array([])
 
@@ -123,7 +133,8 @@ def write_triangle(freq_arr, frames_arr):
 
     return all_frames
 
-#from broken triangle
+# create a sequence of notes using a 'glitched triangle' wave at the given 
+# frequencies and for the given number of frames
 def write_mod_1(freq_arr, frames_arr):
     all_frames = np.array([])
 
@@ -153,20 +164,27 @@ def write_mod_1(freq_arr, frames_arr):
     return all_frames
 
 
+# apply the envelope to the frames that are passed in
 def apply_envelope(frames, length):
     env_length = int(ENV * length)
 
+    #apply ramp to the beginning of the note
     for j in range(env_length):
         frames[j] = frames[j] * (j / env_length)
-    frames = np.flip(frames)
 
+    #flip to do the same for the end of the note
+    frames = np.flip(frames)
     for k in range(env_length):
         frames[k] = frames[k] * (k / env_length)
+
+    #flip back
     frames = np.flip(frames)
 
     return frames
 
 
+# combine the frames from two files to create frames values
+# halfway between them
 #referenced https://stackoverflow.com/questions/28743400/pyaudio-play-multiple-sounds-at-once
 def combine_wavs(wav1, wav2, result):
     wav_1 = wave.open(wav1,'r')
@@ -205,6 +223,7 @@ def combine_wavs(wav1, wav2, result):
 
     new_wav.close()
 
+
 def show_file_parameters(filename):
     file = wave.open(filename,'r')
     print(filename)
@@ -217,7 +236,6 @@ def show_file_parameters(filename):
 
 
 
-
 def main():
     melody = 'melody.wav'
 
@@ -226,6 +244,8 @@ def main():
 
     wave_file = open_file(melody, sum(num_frames)*num_sequences)
     frames = np.array([])
+
+    ## testing ## 
 
     #A, D, E:
     freqs = [440, 587, 330, 440]
@@ -251,13 +271,9 @@ def main():
     freqs = [220, 294, 165, 220]
     frames = np.append(frames, write_mod_1(freqs, num_frames))
 
-
     write_file(frames, wave_file)
-
-
-
     
-    #combine_wavs(sine_1, sine_2, result)
+    #combine_wavs('new_sine.wav', 'new_mod_220.wav', 'result.wav')
     show_file_parameters(melody)
     wave_file.close()
 
