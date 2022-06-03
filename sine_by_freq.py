@@ -34,13 +34,7 @@ def write_file(frames, filename):
     #for f in frames:
     file.writeframes(frames)
     file.close()
-    return
-    for i in range(len(frames)):
-        print("f:", frames[i])
-        fr = frames[i]
-        print("f:", fr)
-        frame = struct.pack('<h', fr)
-        file.writeframes(fr)
+
 
 # create a sequence of notes using a sine wave at the given 
 # frequencies and for the given number of frames
@@ -48,6 +42,7 @@ def write_sine(freq_arr, frames_arr):
     all_frames = np.array([])
 
     for i in range(len(freq_arr)):
+        print(freq_arr[i])
         frames = []
         length = int(frames_arr[i])
 
@@ -59,8 +54,8 @@ def write_sine(freq_arr, frames_arr):
         frames = apply_envelope(frames, length)
         all_frames = np.append(all_frames, frames)
 
-
     return all_frames
+
 
 # create a sequence of notes using a square wave at the given 
 # frequencies and for the given number of frames
@@ -142,6 +137,7 @@ def write_triangle(freq_arr, frames_arr):
         all_frames = np.append(all_frames, frames)
 
     return all_frames
+
 
 # create a sequence of notes using a 'glitched triangle' wave at the given 
 # frequencies and for the given number of frames
@@ -246,17 +242,7 @@ def show_file_parameters(filename):
 
 
 def write_from_midi(filename, times_arr, freqs_arr):
-    frames_arr = times_arr
-    print("in sine_by_freq", frames_arr)
-    for i in range(len(frames_arr)):
-        frames_arr[i] = int(frames_arr[i] * FRAMES)
-        #print(frames_arr[i])
-
-    #print(frames_arr)
-
-    total_frames = sum(frames_arr)
-    #file = open_file(filename, total_frames)
-
+    frames_arr = np.multiply(times_arr, FRAMES)
     frames = write_sine(freqs_arr, frames_arr)
     write_file(frames, filename)
 
