@@ -1,4 +1,4 @@
-
+import sys
 import wave 
 from math import sin, pi
 import struct
@@ -15,24 +15,32 @@ ENV = 0.05      #fraction of start & end of note to apply ramp/reverse
 
 
 # open and set up a .wav file
-def open_file(file_name, total_frames):
-    wave_file = wave.open(file_name, 'wb')
-    wave_file.setnchannels(1)
-    wave_file.setsampwidth(2)
-    wave_file.setframerate(FRAMES)
-    wave_file.setnframes(total_frames)
-    return wave_file
+#def open_file(file_name, total_frames):
 
 # write the given frames to the .wav file
-def write_file(frames, file):
+def write_file(frames, filename):
+    #print(frames.shape)
+    file = wave.open(filename, 'wb')
+    file.setnchannels(1)
+    file.setsampwidth(2)
+    file.setframerate(FRAMES)
+    file.setnframes(len(frames))
+
     #print(frames.shape)
     frames = np.ravel(frames)
     frames = frames.astype('int16')
     print(frames.shape)
-    print(frames)
-    for f in frames:
-        frame = struct.pack('=h', int(f))
-        file.writeframes(frame)
+    print(frames.dtype)
+    #for f in frames:
+    file.writeframes(frames)
+    file.close()
+    return
+    for i in range(len(frames)):
+        print("f:", frames[i])
+        fr = frames[i]
+        print("f:", fr)
+        frame = struct.pack('<h', fr)
+        file.writeframes(fr)
 
 # create a sequence of notes using a sine wave at the given 
 # frequencies and for the given number of frames
@@ -247,11 +255,10 @@ def write_from_midi(filename, times_arr, freqs_arr):
     #print(frames_arr)
 
     total_frames = sum(frames_arr)
-    file = open_file(filename, total_frames)
+    #file = open_file(filename, total_frames)
 
     frames = write_sine(freqs_arr, frames_arr)
-    write_file(frames, file)
-    file.close()
+    write_file(frames, filename)
 
 
 
