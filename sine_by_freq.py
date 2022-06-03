@@ -5,7 +5,7 @@ import struct
 import numpy as np
 
 #Author: Amber Shore
-#Version: 2022-05-28
+#Version: 2022-06-03
 
 
 #Sound generation parameters:
@@ -27,8 +27,9 @@ def open_file(file_name, total_frames):
 def write_file(frames, file):
     #print(frames.shape)
     frames = np.ravel(frames)
-    print("this!")
+    frames = frames.astype('int16')
     print(frames.shape)
+    print(frames)
     for f in frames:
         frame = struct.pack('=h', int(f))
         file.writeframes(frame)
@@ -40,7 +41,7 @@ def write_sine(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        length = frames_arr[i]
+        length = int(frames_arr[i])
 
         #use number of frames
         for x in range(length):
@@ -235,10 +236,13 @@ def show_file_parameters(filename):
     print("Parameters:", file.getparams())
     file.close()
 
+
 def write_from_midi(filename, times_arr, freqs_arr):
-    frames_arr = list(times_arr)
+    frames_arr = times_arr
+    print("in sine_by_freq", frames_arr)
     for i in range(len(frames_arr)):
         frames_arr[i] = int(frames_arr[i] * FRAMES)
+        #print(frames_arr[i])
 
     #print(frames_arr)
 

@@ -5,7 +5,7 @@ import sine_by_freq
 
 #https://soundprogramming.net/file-formats/midi-note-frequencies/
 NOTES = 'notes.txt'
-TEST = 'test_1.wav'
+TEST = 'test_3.wav'
 
 
 #info:
@@ -14,8 +14,51 @@ changed library to this:
 https://mido.readthedocs.io/en/latest/installing.html
 '''
 
-#development notes:
-    #ignoring tempo & velocity for now
+## TODO
+    # time is a problem
+
+
+
+def read(midi_file):
+    mid = MidiFile(midi_file)
+    for i, track in enumerate(mid.tracks):
+        for msg in track:
+            if msg.type == 'note_off':
+                return read_midi_note_off(midi_file)
+
+    #else no note_off messages in midi:
+    return read_midi(midi_file)
+
+
+def read_midi_note_off(midi_file):
+    mid = MidiFile(midi_file)
+    midi_length = mid.length
+
+    #tempo:
+    tempo = 500000 #default tempo from mido 
+
+    all_notes = []
+    input_notes = []
+    deltas = []
+    for i, track in enumerate(mid.tracks):
+        print('Track {}: {}'.format(i, track.name))
+        input_notes = input_notes.clear
+        input_notes = []
+        for msg in track:
+            print(msg) #TODO remove
+            if msg.type == 'note_off':
+                delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
+                deltas.append(delta)
+                input_notes.append((msg.note, delta))
+            elif msg.type == 'set_tempo':
+                tempo = msg.tempo
+
+        if(input_notes):
+            all_notes.append(input_notes)
+
+    ave_delta = sum(deltas)/len(deltas)
+    return all_notes, ave_delta
+    
 
 
 def read_midi(midi_file):
@@ -36,12 +79,15 @@ def read_midi(midi_file):
         input_notes = input_notes.clear
         input_notes = []
         for msg in track:
+            print(msg) #TODO remove
             if msg.type == 'note_on':
                 #print(msg.note)
                 #finally an answer: https://stackoverflow.com/questions/45772214/convert-time-tick-in-python-midi-mido-read-save-file
                 if msg.time > 0:
                     #round to only 4 decimal places
-                    delta = round(tick2second(msg.time, mid.ticks_per_beat, tempo), 4)
+                    #print(msg.time)
+                    #delta = round(tick2second(msg.time, mid.ticks_per_beat, tempo), 4)
+                    delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
                     #print(delta)
                 else:
                     delta = 0
@@ -50,20 +96,17 @@ def read_midi(midi_file):
             elif msg.type == 'set_tempo':
                 tempo = msg.tempo
             elif msg.type == 'time_signature':
-                #print(msg)
                 pass
         if(input_notes):
             all_notes.append(input_notes)
 
-    #print(all_notes)
     ave_delta = sum(deltas)/len(deltas)
     return all_notes, ave_delta
     
+
 class Midi_chart:
     def __init__(self):
         self.setup_notes()
-
-
 
     def setup_notes(self):
         notes = []
@@ -82,8 +125,8 @@ class Midi_chart:
 def decode_midi(input, chart, delta):
     #n_tracks = len(input)
     n_tracks = 1
-    freqs = []
-    times = []
+    freqs = np.array([])
+    times = np.array([])
 
     for i in range(n_tracks):
         #convert each note to freq, and time in seconds
@@ -91,7 +134,6 @@ def decode_midi(input, chart, delta):
             note_tuple = input[i][j] 
             note = chart.notes[note_tuple[0]] #chart at index of note num is frequency
             delta_time = note_tuple[1]
-            #time = 0 # ... didn't get note_off events (none in sample?)
 
             #cases: last note, not last but time=0
             if j+1 >= len(input[i]):
@@ -99,13 +141,16 @@ def decode_midi(input, chart, delta):
             else:
                 time = input[i][j+1][1] #the delta from the following note
                 if time > 0:
-                    times.append(time) #testing: shouldn't be over 2 but time is off
-                    freqs.append(note)
+                    times = np.append(times, round(time, 4)) 
+                    freqs = np.append(freqs, note)
 
-        #sine_by_freq.write_sine(len(freqs), freqs, times, TEST)
-        #sine_by_freq.write_from_midi(TEST, times, freqs)
-        
-    print('print here')
+    times = np.asarray(times)
+    freqs = np.asarray(freqs)
+    times = np.flip(times)
+    freqs = np.flip(freqs)
+
+    print("times in midi_in:", times)
+    print("call sine_by_freq")
     sine_by_freq.write_from_midi(TEST, times, freqs)
 
 
@@ -116,7 +161,7 @@ def main():
         sys.exit(1)
     midi_file = sys.argv[1]
     print(midi_file)
-    input_notes, delta = read_midi(midi_file)
+    input_notes, delta = read(midi_file)
     chart = Midi_chart()
     note_instructions = decode_midi(input_notes, chart, delta)
 
