@@ -16,6 +16,9 @@ https://mido.readthedocs.io/en/latest/installing.html
 
 ## TODO
     # interpret note_on with time=0 as note_off
+    # problem is don't have a way to parse rests for files 
+    #  that don't have the note_off messages
+
 
 
 
@@ -23,7 +26,8 @@ def read(midi_file):
     mid = MidiFile(midi_file)
 
     #check to see if midi file contains note_off events
-    for i, track in enumerate(mid.tracks):
+    #for i, track in enumerate(mid.tracks):
+    if False:
         for msg in track:
             if msg.type == 'note_off':
                 return read_midi_note_off(midi_file), True
@@ -78,13 +82,18 @@ def read_midi(midi_file):
         input_notes = []
         for msg in track:
             print(msg) #TODO remove
-            if msg.type == 'note_on' and msg.velocity == 0:
-                delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
-                input_notes.append((msg.note, delta))
+            #if msg.type == 'note_on' and msg.velocity == 0:
+            if (msg.type == 'note_on'  and msg.velocity == 0) or msg.type == 'note_off':
+                if msg.time != 0:
+                    #delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
+                    delta = tick2second(msg.time, 110, tempo)
+                    print("ticks", mid.ticks_per_beat)
+                    input_notes.append((msg.note, delta))
             elif msg.type == 'set_tempo':
                 tempo = msg.tempo
+                print(msg)
             elif msg.type == 'time_signature':
-                pass
+                print(msg)
         if(input_notes):
             all_notes.append(input_notes)
 
