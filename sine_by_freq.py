@@ -1,11 +1,11 @@
-
+import sys
 import wave 
 from math import sin, pi
 import struct
 import numpy as np
 
 #Author: Amber Shore
-#Version: 2022-05-28
+#Version: 2022-06-03
 
 
 #Sound generation parameters:
@@ -15,22 +15,26 @@ ENV = 0.05      #fraction of start & end of note to apply ramp/reverse
 
 
 # open and set up a .wav file
-def open_file(file_name, total_frames):
-    wave_file = wave.open(file_name, 'wb')
-    wave_file.setnchannels(1)
-    wave_file.setsampwidth(2)
-    wave_file.setframerate(FRAMES)
-    wave_file.setnframes(total_frames)
-    return wave_file
+#def open_file(file_name, total_frames):
 
 # write the given frames to the .wav file
-def write_file(frames, file):
-    print(frames.shape)
+def write_file(frames, filename):
+    #print(frames.shape)
+    file = wave.open(filename, 'wb')
+    file.setnchannels(1)
+    file.setsampwidth(2)
+    file.setframerate(FRAMES)
+    file.setnframes(len(frames))
+
+    #print(frames.shape)
     frames = np.ravel(frames)
+    frames = frames.astype('int16')
     print(frames.shape)
-    for f in frames:
-        frame = struct.pack('=h', int(f))
-        file.writeframes(frame)
+    print(frames.dtype)
+    #for f in frames:
+    file.writeframes(frames)
+    file.close()
+
 
 # create a sequence of notes using a sine wave at the given 
 # frequencies and for the given number of frames
@@ -39,7 +43,7 @@ def write_sine(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        length = frames_arr[i]
+        length = int(frames_arr[i])
 
         #use number of frames
         for x in range(length):
@@ -49,8 +53,8 @@ def write_sine(freq_arr, frames_arr):
         frames = apply_envelope(frames, length)
         all_frames = np.append(all_frames, frames)
 
-
     return all_frames
+
 
 # create a sequence of notes using a square wave at the given 
 # frequencies and for the given number of frames
@@ -132,6 +136,7 @@ def write_triangle(freq_arr, frames_arr):
         all_frames = np.append(all_frames, frames)
 
     return all_frames
+
 
 # create a sequence of notes using a 'glitched triangle' wave at the given 
 # frequencies and for the given number of frames
@@ -233,6 +238,12 @@ def show_file_parameters(filename):
     print("Frames:", file.getnframes())
     print("Parameters:", file.getparams())
     file.close()
+
+
+def write_from_midi(filename, times_arr, freqs_arr):
+    frames_arr = np.multiply(times_arr, FRAMES)
+    frames = write_sine(freqs_arr, frames_arr)
+    write_file(frames, filename)
 
 
 
