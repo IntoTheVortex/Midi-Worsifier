@@ -63,7 +63,7 @@ def read_midi_note_off(midi_file):
 
 def read_midi(midi_file):
     #ref https://mido.readthedocs.io/en/latest/midi_files.html
-    #for mido:
+    #ref for tick2second: https://stackoverflow.com/questions/45772214/convert-time-tick-in-python-midi-mido-read-save-file
     mid = MidiFile(midi_file)
     #midi_length = mid.length
 
@@ -78,13 +78,9 @@ def read_midi(midi_file):
         input_notes = []
         for msg in track:
             print(msg) #TODO remove
-            if msg.type == 'note_on':
-                #finally an answer: https://stackoverflow.com/questions/45772214/convert-time-tick-in-python-midi-mido-read-save-file
-                if msg.velocity == 0:
-                    delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
-                    input_notes.append((msg.note, delta))
-                else:
-                    input_notes.append((0, msg.time))
+            if msg.type == 'note_on' and msg.velocity == 0:
+                delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
+                input_notes.append((msg.note, delta))
             elif msg.type == 'set_tempo':
                 tempo = msg.tempo
             elif msg.type == 'time_signature':
@@ -119,11 +115,12 @@ def decode_midi(input, chart, has_note_off=False):
     freqs = np.array([])
     times = np.array([])
 
-    if has_note_off:
+    #if has_note_off:
+    if True:
         for i in range(len(input[0])):
             note = chart.notes[input[0][i][0]]
             times = np.append(times, input[0][i][1])
-            print("note", note) #TODO remove
+            #print("note", note) #TODO remove
             freqs = np.append(freqs, note)
 
     else:
@@ -155,9 +152,9 @@ def decode_midi(input, chart, has_note_off=False):
 
     times = np.asarray(times)
     freqs = np.asarray(freqs)
-    if not has_note_off:
-        freqs = np.flip(freqs)
-        times = np.flip(times)
+    #if not has_note_off:
+        #freqs = np.flip(freqs)
+        #times = np.flip(times)
 
     sine_by_freq.write_from_midi(TEST, times, freqs)
 
