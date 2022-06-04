@@ -46,6 +46,7 @@ def read_midi_note_off(midi_file):
         input_notes = input_notes.clear
         input_notes = []
         for msg in track:
+            print(msg) #TODO remove
             if msg.type == 'note_off':
                 delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
                 deltas.append(delta)
@@ -76,14 +77,14 @@ def read_midi(midi_file):
         input_notes = input_notes.clear
         input_notes = []
         for msg in track:
+            print(msg) #TODO remove
             if msg.type == 'note_on':
                 #finally an answer: https://stackoverflow.com/questions/45772214/convert-time-tick-in-python-midi-mido-read-save-file
-                if msg.time > 0:
+                if msg.velocity == 0:
                     delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
+                    input_notes.append((msg.note, delta))
                 else:
-                    delta = 0
-                deltas.append(delta)
-                input_notes.append((msg.note, delta))
+                    input_notes.append((0, msg.time))
             elif msg.type == 'set_tempo':
                 tempo = msg.tempo
             elif msg.type == 'time_signature':
@@ -122,24 +123,35 @@ def decode_midi(input, chart, has_note_off=False):
         for i in range(len(input[0])):
             note = chart.notes[input[0][i][0]]
             times = np.append(times, input[0][i][1])
-            print("note", note)
+            print("note", note) #TODO remove
             freqs = np.append(freqs, note)
 
     else:
         #convert each note to freq, and time in seconds
+        print("input", input) #TODO remove
         for i in range(len(input[0])-1, 0, -1):
             note_tuple = input[0][i] 
-            note = chart.notes[note_tuple[0]] #chart at index of note num is frequency
-            delta_time = note_tuple[1]
-
-            #cases: last note, not last but time=0
-            if j+1 >= len(input[0]):
-                time = 0
+            if note_tuple[0] == 0:
+                print(note_tuple)
+                continue
             else:
-                time = input[0][i+1][1] #the delta from the following note
-                if time > 0:
+                note = chart.notes[note_tuple[0]] #chart at index of note num is frequency
+                delta_time = note_tuple[1]
+
+                #cases: last note, not last but time=0
+                if i+1 >= len(input[0]):
+                    time = note_tuple[1]
                     times = np.append(times, round(time, 4)) 
                     freqs = np.append(freqs, note)
+                    #print("times", times)
+                    #print("freqs", freqs)
+                else:
+                    time = input[0][i+1][1] #the delta from the following note
+                    if time > 0:
+                        times = np.append(times, round(time, 4)) 
+                        freqs = np.append(freqs, note)
+                        #print("times", times)
+                        #print("freqs", freqs)
 
     times = np.asarray(times)
     freqs = np.asarray(freqs)

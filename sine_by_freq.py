@@ -42,7 +42,6 @@ def write_sine(freq_arr, frames_arr):
     all_frames = np.array([])
 
     for i in range(len(freq_arr)):
-        print(freq_arr[i])
         frames = []
         length = int(frames_arr[i])
 
