@@ -6,7 +6,7 @@ import struct
 import numpy as np
 
 #Author: Amber Shore
-#Version: 2022-06-03
+#Version: 2022-06-06
 
 
 #Sound generation parameters:

@@ -4,6 +4,11 @@ from mido import MidiFile, tick2second
 import sine_by_freq
 import argparse
 
+
+#Author: Amber Shore
+#Version: 2022-06-06
+
+
 #https://soundprogramming.net/file-formats/midi-note-frequencies/
 NOTES = 'notes.txt'
 TEST = 'test_3.wav'
