@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from mido import MidiFile, tick2second
 import sine_by_freq
+import argparse
 
 #https://soundprogramming.net/file-formats/midi-note-frequencies/
 NOTES = 'notes.txt'
@@ -134,8 +135,7 @@ class Midi_chart:
 
 
 
-def decode_midi(input, chart):
-    n_tracks = len(input)
+def decode_midi(input, chart, args):
     freqs = np.array([])
     times = np.array([])
 
@@ -150,19 +150,35 @@ def decode_midi(input, chart):
     times = np.asarray(times)
     freqs = np.asarray(freqs)
 
-    sine_by_freq.write_from_midi(TEST, times, freqs)
+    sine_by_freq.write_from_midi(TEST, times, freqs, args)
+
+
+def get_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--midi", type=str, required=True)
+    parser.add_argument("--wave_style", type=str, default="sine")
+    parser.add_argument("--random", type=bool, default=False)
+    args = parser.parse_args()
+    return args
 
 
 
 def main():
     if len(sys.argv) < 2:
         print("Please enter a midi file as an argument.")
+        print("Usage: python midi_interpreter.y midi_file.mid ")
         sys.exit(1)
-    midi_file = sys.argv[1]
+
+    args = get_arguments()
+
+    #midi_file = sys.argv[1]
+    midi_file = args.midi
     print(midi_file)
     input_notes = read(midi_file)
     chart = Midi_chart()
-    decode_midi(input_notes, chart)
+
+    decode_midi(input_notes, chart, args)
+
 
 
 

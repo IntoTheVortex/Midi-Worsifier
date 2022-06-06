@@ -1,6 +1,7 @@
 import sys
 import wave 
 from math import sin, pi
+import random
 import struct
 import numpy as np
 
@@ -12,6 +13,7 @@ import numpy as np
 FRAMES = 48000  #Frames per second
 AMP = 16384     #amplitude
 ENV = 0.05      #fraction of start & end of note to apply ramp/reverse
+TYPES = ["sine", "square", "sawtooth", "triangle", "mod_1"]
 
 
 # open and set up a .wav file
@@ -64,14 +66,18 @@ def write_square(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
+        if freq_arr[i] == 0:
+            frames.extend([0 for x in range(int(frames_arr[i]))])
+            continue
+
         halfcycle = FRAMES // (2 * freq_arr[i])
-        length = frames_arr[i]
+        length = int(frames_arr[i])
 
         #use number of frames
         period = -1
         cycle_counter = 0
         for x in range(length):
-            f = period * (AMP/5)
+            f = period * (AMP/4)
             cycle_counter += 1
             if cycle_counter >= halfcycle:
                 period = -period
@@ -91,12 +97,16 @@ def write_saw(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        length = frames_arr[i]
-        cycle = FRAMES // freq_arr[i]
+        if freq_arr[i] == 0:
+            frames.extend([0 for x in range(int(frames_arr[i]))])
+            continue
+
+        length = int(frames_arr[i])
+        cycle = int(FRAMES // freq_arr[i])
 
         arr = np.linspace(-1, 1, cycle)
         for x in range(length):
-            f = (AMP/5) * arr[x%len(arr)]
+            f = (AMP/3) * arr[x%len(arr)]
             frames.append(f)
 
         frames = apply_envelope(frames, length)
@@ -112,8 +122,12 @@ def write_triangle(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        halfcycle = FRAMES // (2 * freq_arr[i])
-        length = frames_arr[i]
+        if freq_arr[i] == 0:
+            frames.extend([0 for x in range(int(frames_arr[i]))])
+            continue
+
+        halfcycle = int(FRAMES // (2 * freq_arr[i]))
+        length = int(frames_arr[i])
 
         up_arr = np.linspace(-1, 1, halfcycle)
         down_arr = np.linspace(1, -1, halfcycle)
@@ -145,21 +159,26 @@ def write_mod_1(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        cycle = FRAMES // freq_arr[i]
-        halfcycle = cycle//2
+
+        if freq_arr[i] == 0:
+            frames.extend([0 for x in range(int(frames_arr[i]))])
+            continue
+
+        cycle = int(FRAMES // freq_arr[i])
+        halfcycle = int(cycle//2)
         up_arr = np.linspace(-1, 1, halfcycle)
         down_arr = np.linspace(1, -1, halfcycle)
         cycle_counter = 0
 
-        for x in range(frames_arr[i]):
+        for x in range(int(frames_arr[i])):
             if cycle_counter >= cycle:
-                f = (AMP/2) * up_arr[x%len(up_arr)]
+                f = (AMP/3) * up_arr[x%len(up_arr)]
                 cycle_counter = 0
             elif cycle_counter >= halfcycle:
-                f = (AMP/2) * down_arr[x%len(down_arr)]
+                f = (AMP/3) * down_arr[x%len(down_arr)]
                 cycle_counter += 1
             else:
-                f = (AMP/2) * up_arr[x%len(up_arr)]
+                f = (AMP/3) * up_arr[x%len(up_arr)]
                 cycle_counter += 1
             frames.append(f)
 
@@ -240,9 +259,28 @@ def show_file_parameters(filename):
     file.close()
 
 
-def write_from_midi(filename, times_arr, freqs_arr):
+def write_from_midi(filename, times_arr, freqs_arr, args):
     frames_arr = np.multiply(times_arr, FRAMES)
-    frames = write_sine(freqs_arr, frames_arr)
+    wave_functions = [write_sine, write_square, write_saw, write_triangle, write_mod_1]
+
+    if args.random == True:
+        frames = np.array([])
+        for i in range(len(freqs_arr)):
+            frames = np.append(frames, random.choice(wave_functions)([freqs_arr[i]], [frames_arr[i]]))
+    elif args.wave_style == "sine":
+        frames = write_sine(freqs_arr, frames_arr)
+    elif args.wave_style == "square":
+        frames = write_square(freqs_arr, frames_arr)
+    elif args.wave_style == "sawtooth":
+        frames = write_saw(freqs_arr, frames_arr)
+    elif args.wave_style == "triangle":
+        frames = write_triangle(freqs_arr, frames_arr)
+    elif args.wave_style == "mod_1":
+        frames = write_mod_1(freqs_arr, frames_arr)
+    # default sine
+    else:
+        frames = write_sine(freqs_arr, frames_arr)
+
     write_file(frames, filename)
 
 
@@ -251,12 +289,9 @@ def main():
     melody = 'melody.wav'
 
     num_frames = [FRAMES, int(FRAMES/2), int(FRAMES/2), FRAMES]
-    num_sequences = 6
-
-    wave_file = open_file(melody, sum(num_frames)*num_sequences)
     frames = np.array([])
 
-    ## testing ## 
+    ## testing wave functions and relative volume ## 
 
     #A, D, E:
     freqs = [440, 587, 330, 440]
@@ -282,11 +317,10 @@ def main():
     freqs = [220, 294, 165, 220]
     frames = np.append(frames, write_mod_1(freqs, num_frames))
 
-    write_file(frames, wave_file)
+    write_file(frames, melody)
     
     #combine_wavs('new_sine.wav', 'new_mod_220.wav', 'result.wav')
     show_file_parameters(melody)
-    wave_file.close()
 
 
 
