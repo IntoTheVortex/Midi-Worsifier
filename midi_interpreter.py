@@ -11,14 +11,7 @@ import argparse
 
 #https://soundprogramming.net/file-formats/midi-note-frequencies/
 NOTES = 'notes.txt'
-TEST = 'test_3.wav'
-
-
-#info:
-'''
-changed library to this:
-https://mido.readthedocs.io/en/latest/installing.html
-'''
+TEST = 'result.wav'
 
 
 
@@ -29,7 +22,6 @@ def read(midi_file):
     #check to see if midi file contains note_off events
     for _, track in enumerate(mid.tracks):
         for msg in track:
-            print(msg)
             if msg.type == 'note_off':
                 has_off = True
                 break
@@ -42,7 +34,6 @@ def read(midi_file):
 
 def read_midi_note_off(midi_file):
     mid = MidiFile(midi_file)
-    #midi_length = mid.length
 
     tempo = 500000 #default tempo from mido 
 
@@ -50,11 +41,10 @@ def read_midi_note_off(midi_file):
     input_notes = []
     deltas = []
     for i, track in enumerate(mid.tracks):
-        print('Track {}: {}'.format(i, track.name))
+        #print('Track {}: {}'.format(i, track.name))
         input_notes = input_notes.clear
         input_notes = []
         for msg in track:
-            print(msg) #TODO remove
             if msg.type == 'note_off':
                 delta = tick2second(msg.time, mid.ticks_per_beat, tempo)
                 deltas.append(delta)
@@ -73,7 +63,6 @@ def read_midi(midi_file):
     #ref https://mido.readthedocs.io/en/latest/midi_files.html
     #ref for tick2second: https://stackoverflow.com/questions/45772214/convert-time-tick-in-python-midi-mido-read-save-file
     mid = MidiFile(midi_file)
-    #midi_length = mid.length
 
     tempo = 500000 #default tempo from mido 
     note_playing = False
@@ -83,11 +72,10 @@ def read_midi(midi_file):
     last_time = 0
     last_note = 0
     for i, track in enumerate(mid.tracks):
-        print('Track {}: {}'.format(i, track.name))
+        #print('Track {}: {}'.format(i, track.name))
         input_notes = input_notes.clear
         input_notes = []
         for msg in track:
-            print(msg) #TODO remove
 
             #actual note_on:
             if (msg.type == 'note_on'  and msg.velocity != 0):
@@ -144,16 +132,14 @@ def decode_midi(input, chart, args):
     freqs = np.array([])
     times = np.array([])
 
-    for i in range(len(input[0])):
-        if input[0][i][0] == 0:
-            note = 0
-        else:
-            note = chart.notes[input[0][i][0]]
-        times = np.append(times, input[0][i][1])
-        freqs = np.append(freqs, note)
-
-    times = np.asarray(times)
-    freqs = np.asarray(freqs)
+    for i in range(len(input)):
+        for j in range(len(input[i])):
+            if input[i][j][0] == 0:
+                note = 0
+            else:
+                note = chart.notes[input[i][j][0]]
+            times = np.append(times, input[i][j][1])
+            freqs = np.append(freqs, note)
 
     sine_by_freq.write_from_midi(TEST, times, freqs, args)
 
@@ -176,9 +162,8 @@ def main():
 
     args = get_arguments()
 
-    #midi_file = sys.argv[1]
     midi_file = args.midi
-    print(midi_file)
+    print("input file: ", midi_file)
     input_notes = read(midi_file)
     chart = Midi_chart()
 

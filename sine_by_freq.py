@@ -16,26 +16,21 @@ ENV = 0.05      #fraction of start & end of note to apply ramp/reverse
 TYPES = ["sine", "square", "sawtooth", "triangle", "mod_1"]
 
 
-# open and set up a .wav file
-#def open_file(file_name, total_frames):
 
 # write the given frames to the .wav file
 def write_file(frames, filename):
-    #print(frames.shape)
     file = wave.open(filename, 'wb')
     file.setnchannels(1)
     file.setsampwidth(2)
     file.setframerate(FRAMES)
     file.setnframes(len(frames))
 
-    #print(frames.shape)
     frames = np.ravel(frames)
     frames = frames.astype('int16')
-    print(frames.shape)
-    print(frames.dtype)
-    #for f in frames:
+
     file.writeframes(frames)
     file.close()
+    print("output file: ", filename)
 
 
 # create a sequence of notes using a sine wave at the given 
@@ -66,23 +61,24 @@ def write_square(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        if freq_arr[i] == 0:
-            frames.extend([0 for x in range(int(frames_arr[i]))])
-            continue
-
-        halfcycle = FRAMES // (2 * freq_arr[i])
         length = int(frames_arr[i])
 
-        #use number of frames
-        period = -1
-        cycle_counter = 0
-        for x in range(length):
-            f = period * (AMP/4)
-            cycle_counter += 1
-            if cycle_counter >= halfcycle:
-                period = -period
-                cycle_counter = 0
-            frames.append(f)
+        if freq_arr[i] == 0:
+            frames = np.zeros(length)
+
+        else:
+            halfcycle = FRAMES // (2 * freq_arr[i])
+
+            #use number of frames
+            period = -1
+            cycle_counter = 0
+            for x in range(length):
+                f = period * (AMP/4)
+                cycle_counter += 1
+                if cycle_counter >= halfcycle:
+                    period = -period
+                    cycle_counter = 0
+                frames.append(f)
 
         frames = apply_envelope(frames, length)
         all_frames = np.append(all_frames, frames)
@@ -97,17 +93,18 @@ def write_saw(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        if freq_arr[i] == 0:
-            frames.extend([0 for x in range(int(frames_arr[i]))])
-            continue
-
         length = int(frames_arr[i])
-        cycle = int(FRAMES // freq_arr[i])
 
-        arr = np.linspace(-1, 1, cycle)
-        for x in range(length):
-            f = (AMP/3) * arr[x%len(arr)]
-            frames.append(f)
+        if freq_arr[i] == 0:
+            frames = np.zeros(length)
+
+        else:
+            cycle = int(FRAMES // freq_arr[i])
+
+            arr = np.linspace(-1, 1, cycle)
+            for x in range(length):
+                f = (AMP/3) * arr[x%len(arr)]
+                frames.append(f)
 
         frames = apply_envelope(frames, length)
         all_frames = np.append(all_frames, frames)
@@ -122,29 +119,30 @@ def write_triangle(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
-        if freq_arr[i] == 0:
-            frames.extend([0 for x in range(int(frames_arr[i]))])
-            continue
-
-        halfcycle = int(FRAMES // (2 * freq_arr[i]))
         length = int(frames_arr[i])
 
-        up_arr = np.linspace(-1, 1, halfcycle)
-        down_arr = np.linspace(1, -1, halfcycle)
-        cycle_counter = 0
+        if freq_arr[i] == 0:
+            frames = np.zeros(length)
 
-        for x in range(length):
-            if cycle_counter == halfcycle*2:
-                cycle_counter = 0
+        else:
+            halfcycle = int(FRAMES // (2 * freq_arr[i]))
 
-            if cycle_counter >= halfcycle:
-                f = AMP * down_arr[x%halfcycle]
-                cycle_counter += 1
-            else:
-                f = AMP * up_arr[x%halfcycle]
-                cycle_counter += 1
+            up_arr = np.linspace(-1, 1, halfcycle)
+            down_arr = np.linspace(1, -1, halfcycle)
+            cycle_counter = 0
 
-            frames.append(f)
+            for x in range(length):
+                if cycle_counter == halfcycle*2:
+                    cycle_counter = 0
+
+                if cycle_counter >= halfcycle:
+                    f = AMP * down_arr[x%halfcycle]
+                    cycle_counter += 1
+                else:
+                    f = AMP * up_arr[x%halfcycle]
+                    cycle_counter += 1
+
+                frames.append(f)
 
         frames = apply_envelope(frames, length)
         all_frames = np.append(all_frames, frames)
@@ -159,30 +157,31 @@ def write_mod_1(freq_arr, frames_arr):
 
     for i in range(len(freq_arr)):
         frames = []
+        length = int(frames_arr[i])
 
         if freq_arr[i] == 0:
-            frames.extend([0 for x in range(int(frames_arr[i]))])
-            continue
+            frames = np.zeros(length)
+        
+        else:
+            cycle = int(FRAMES // freq_arr[i])
+            halfcycle = int(cycle//2)
+            up_arr = np.linspace(-1, 1, halfcycle)
+            down_arr = np.linspace(1, -1, halfcycle)
+            cycle_counter = 0
 
-        cycle = int(FRAMES // freq_arr[i])
-        halfcycle = int(cycle//2)
-        up_arr = np.linspace(-1, 1, halfcycle)
-        down_arr = np.linspace(1, -1, halfcycle)
-        cycle_counter = 0
+            for x in range(length):
+                if cycle_counter >= cycle:
+                    f = (AMP/3) * up_arr[x%len(up_arr)]
+                    cycle_counter = 0
+                elif cycle_counter >= halfcycle:
+                    f = (AMP/3) * down_arr[x%len(down_arr)]
+                    cycle_counter += 1
+                else:
+                    f = (AMP/3) * up_arr[x%len(up_arr)]
+                    cycle_counter += 1
+                frames.append(f)
 
-        for x in range(int(frames_arr[i])):
-            if cycle_counter >= cycle:
-                f = (AMP/3) * up_arr[x%len(up_arr)]
-                cycle_counter = 0
-            elif cycle_counter >= halfcycle:
-                f = (AMP/3) * down_arr[x%len(down_arr)]
-                cycle_counter += 1
-            else:
-                f = (AMP/3) * up_arr[x%len(up_arr)]
-                cycle_counter += 1
-            frames.append(f)
-
-        frames = apply_envelope(frames, frames_arr[i])
+        frames = apply_envelope(frames, length)
         all_frames = np.append(all_frames, frames)
 
     return all_frames
