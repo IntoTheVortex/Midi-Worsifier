@@ -21,7 +21,7 @@ Notes:
 
 **Report**
 
-Originally, this project was intended to include a Magenta MelodyRNN trained on Blues melodies, to provide the midi files to translate into .wav files. However, the Magenta version that contains this has been deprecated, and the project was split into different parts and continued [here](https://magenta.tensorflow.org/). The version I used is hosted [here](https://github.com/magenta/magenta), and it proved a lot of trouble with little in the way of support to get it set up in Windows (I now value Windows Subsystem for Linux very highly).
+Originally, this project was intended to include a Magenta MelodyRNN trained on Blues melodies, to provide the midi files to translate into .wav files. However, the Magenta version that contains the models I wished to use has been deprecated, and the project was split into different parts and continued [here](https://magenta.tensorflow.org/). The version I used is hosted [here](https://github.com/magenta/magenta), and it proved a lot of trouble with little in the way of support to get it set up in Windows (I now value Windows Subsystem for Linux very highly).
 
 The model is training now, and eventually the partner project "Variations on a Theme - ML Music Generation" will be completed with an analysis of different training parameters on the Blues dataset compared to the performance of the pre-trained model from the Magenta team, which used a much larger training data set and greater computing resources. The test midi test_mag.mid was generated using this pre-trained model.
 
