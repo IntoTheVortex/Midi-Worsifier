@@ -34,3 +34,5 @@ The reading of the input midi file was aided by the mido library, though I disco
 All three of those assumptions had to be addressed to result in the expected behavior. Since monophonic midi files are assumed, the program will handle any note overlap by cutting the first note short in order to play the next one. Rests were calculated using a flag to tell if a note was already playing, and if not, add up how much time had passed since the last note was played. Checks were added to detect whether the file was of the type that contained note_off messages or not, and called a different processing function in each case. 
 
 Once all this information is read correctly, the midi note codes are converted into frequencies based on a read-in chart. Finally, the are sent to the sine_by_freq.py program to be written into a .wav file with the specified parameters.
+
+[Here](https://soundcloud.com/amber-shore-600817638) are a couple of the generated melodies from the MelodyRNN trained on the Blues dataset, which were put through the Worsifier (they will not top any charts).
